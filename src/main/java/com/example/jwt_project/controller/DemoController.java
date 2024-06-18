@@ -21,4 +21,14 @@ public class DemoController {
     public String postRequest(){
         return " This Page is accessible for anyone";
     }
+
+    @GetMapping("/hi")
+    public String hiRequest(){
+        return " This Page is accessible user Only";
+    }
+
+    @GetMapping("/admin_only")
+    public String admin(){
+        return " This Page is accessible for admin only";
+    }
 }

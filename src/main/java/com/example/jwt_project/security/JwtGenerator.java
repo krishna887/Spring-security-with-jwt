@@ -1,5 +1,6 @@
 package com.example.jwt_project.security;
 
+import com.example.jwt_project.dto.LoginDto;
 import com.example.jwt_project.entity.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -78,10 +79,10 @@ private Claims extractAllClaims(String token) {
             .getPayload();
 }
 
-    public String generateToken(AppUser appUser){
+    public String generateToken(LoginDto loginDto){
 
         String token = Jwts.builder()
-                .subject(appUser.getUsername())
+                .subject(loginDto.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis()+1000*60*2))//for two minute
                 .signWith(getSigninKey())

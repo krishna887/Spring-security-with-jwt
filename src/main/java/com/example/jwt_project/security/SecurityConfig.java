@@ -14,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @RequiredArgsConstructor
 @Configuration
@@ -21,29 +22,26 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig  {
     public static final String ADMIN = "admin";
     public static final String USER = "user";
+    private final JwtAuthenticationFilter jwtAuthFilter;
     private final JwtAuthEntryPoint authEntryPoint;
     private final CustomUserDetailsService userDetailsService;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(
-                (authz) -> authz.requestMatchers("/api/**")
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(req-> req.requestMatchers("api/auth/login/**","api/auth/register/**")
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET)
-                        .permitAll()
-                        .requestMatchers(HttpMethod.DELETE)
-                        .hasRole(ADMIN)
-                        .requestMatchers(HttpMethod.POST)
-                        .permitAll()
-                        .requestMatchers(HttpMethod.PUT)
-                        .hasRole(USER)
+                        .requestMatchers(HttpMethod.DELETE,"/admin_only/**").hasAnyAuthority(ADMIN)
+                        .requestMatchers(HttpMethod.PUT,"/hi").hasAnyAuthority(USER)
                         .anyRequest()
-                        .authenticated());
-        http.userDetailsService(userDetailsService);
-        http.exceptionHandling((exceptions) -> exceptions.authenticationEntryPoint(authEntryPoint));
-        http.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.csrf(AbstractHttpConfigurer::disable);
-        return http.build();
+                        .authenticated())
+                .userDetailsService(userDetailsService)
+                .sessionManagement(session->session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+
     }
     @Bean
     public PasswordEncoder passwordEncoder() {
